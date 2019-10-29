@@ -11,7 +11,7 @@ import Foundation
 import Alamofire
 #endif
 
-struct PLogger {
+public struct PLogger {
   private enum LogType {
     case INFO
     case DEBUG
