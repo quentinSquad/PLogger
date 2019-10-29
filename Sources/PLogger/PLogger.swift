@@ -1,9 +1,17 @@
+//
+//  Plogger.swift
+//  Quentin Yann PIDOUX
+//
+//  Created by Quentin PIDOUX on 09/10/2019.
+//  Copyright © 2019 Fitnext. All rights reserved.
+//
+
 import Foundation
 #if canImport(Alamofire)
 import Alamofire
 #endif
 
-class PLogger {
+class Plogger {
   private enum LogType {
     case INFO
     case DEBUG
@@ -18,6 +26,7 @@ class PLogger {
                   line        : Int = #line,
                   column      : Int = #column,
                   context     : Any? = nil) {
+    
     self.printLog(type: .INFO, message: message(), file, function, line: line, column: column, context: context)
   }
   
@@ -163,13 +172,15 @@ class PLogger {
       }
     case .ERROR:
       string += "|\t\t+ Error    : \n"
+      var errorPrinted = false
+      
       if let error = message() as? Error {
         string += "|\t\t\t+ Localized : \(error.localizedDescription)\n"
         string += "|\t\t\t+ error     : \(error)\n"
+        errorPrinted = true
       }
-      
       #if canImport(Alamofire)
-      else if let error = message() as? AFError {
+      if let error = message() as? AFError {
         string += "|\t\t\t+ Alamofire :\n"
         
         if let value = error.recoverySuggestion {
@@ -202,10 +213,10 @@ class PLogger {
         }
         
         string += "|\t\t\t+ error     : \(error)\n"
+        errorPrinted = true
       }
       #endif
-      
-      else {
+      if errorPrinted == false {
         string += "\(message())\n"
       }
     }
@@ -225,7 +236,7 @@ class PLogger {
                                   column    : Int,
                                   context   : Any? = nil) {
     
-    var string = "┌--- Plogger\n"
+    var string = "┌--- logger\n"
     
     string = self.printDate(to: string)
     string = self.printStatus(to: string, type: type)
