@@ -13,7 +13,7 @@ import Alamofire
 
 //let log = PLogger.self
 
-public struct PLogger {
+public class PLogger {
   private enum LogType {
     case INFO
     case DEBUG
@@ -22,7 +22,7 @@ public struct PLogger {
     case ERROR
   }
   
-	static func info(_ message   : @autoclosure () -> Any,
+	static public func info(_ message   : @autoclosure () -> Any,
                   _ file      : String = #file,
                   _ function  : String = #function,
                   line        : Int = #line,
@@ -32,7 +32,7 @@ public struct PLogger {
     self.printLog(type: .INFO, message: message(), file, function, line: line, column: column, context: context)
   }
   
-  static func debug(_ message   : @autoclosure () -> Any,
+  static public func debug(_ message   : @autoclosure () -> Any,
                    _ file      : String = #file,
                    _ function  : String = #function,
                    line        : Int = #line,
@@ -47,7 +47,7 @@ public struct PLogger {
                       context : context)
   }
   
-  static func verbose(_ message   : @autoclosure () -> Any,
+  static public func verbose(_ message   : @autoclosure () -> Any,
                      _ file      : String = #file,
                      _ function  : String = #function,
                      line        : Int = #line,
@@ -62,7 +62,7 @@ public struct PLogger {
                       context : context)
   }
   
-  static func warning(_ message   : @autoclosure () -> Any,
+  static public func warning(_ message   : @autoclosure () -> Any,
                      _ file      : String = #file,
                      _ function  : String = #function,
                      line        : Int = #line,
@@ -77,7 +77,7 @@ public struct PLogger {
                       context : context)
   }
   
-   static func error(_ message   : @autoclosure () -> Any,
+   static public func error(_ message   : @autoclosure () -> Any,
                     _ file      : String = #file,
                     _ function  : String = #function,
                     line        : Int = #line,
@@ -263,3 +263,4 @@ public struct PLogger {
     #endif
   }
 }
+
