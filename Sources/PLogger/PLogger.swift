@@ -11,6 +11,8 @@ import Foundation
 import Alamofire
 #endif
 
+//let log = PLogger.self
+
 public struct PLogger {
   private enum LogType {
     case INFO
@@ -20,7 +22,7 @@ public struct PLogger {
     case ERROR
   }
   
-  class func info(_ message   : @autoclosure () -> Any,
+	static func info(_ message   : @autoclosure () -> Any,
                   _ file      : String = #file,
                   _ function  : String = #function,
                   line        : Int = #line,
@@ -30,7 +32,7 @@ public struct PLogger {
     self.printLog(type: .INFO, message: message(), file, function, line: line, column: column, context: context)
   }
   
-  class func debug(_ message   : @autoclosure () -> Any,
+  static func debug(_ message   : @autoclosure () -> Any,
                    _ file      : String = #file,
                    _ function  : String = #function,
                    line        : Int = #line,
@@ -45,7 +47,7 @@ public struct PLogger {
                       context : context)
   }
   
-  class func verbose(_ message   : @autoclosure () -> Any,
+  static func verbose(_ message   : @autoclosure () -> Any,
                      _ file      : String = #file,
                      _ function  : String = #function,
                      line        : Int = #line,
@@ -60,7 +62,7 @@ public struct PLogger {
                       context : context)
   }
   
-  class func warning(_ message   : @autoclosure () -> Any,
+  static func warning(_ message   : @autoclosure () -> Any,
                      _ file      : String = #file,
                      _ function  : String = #function,
                      line        : Int = #line,
@@ -75,7 +77,7 @@ public struct PLogger {
                       context : context)
   }
   
-   class func error(_ message   : @autoclosure () -> Any,
+   static func error(_ message   : @autoclosure () -> Any,
                     _ file      : String = #file,
                     _ function  : String = #function,
                     line        : Int = #line,
@@ -90,12 +92,12 @@ public struct PLogger {
                       context : context)
   }
   
-  private class func printDate(to message: String) -> String {
+  private static func printDate(to message: String) -> String {
     let string = "|\t- Date     : \(Date())\n"
     return "\(message)\(string)"
   }
   
-  private class func printStatus(to message: String, type: LogType) -> String {
+  private static func printStatus(to message: String, type: LogType) -> String {
     var string = "|\t- Status   : "
     switch type {
     case .INFO:
@@ -112,7 +114,7 @@ public struct PLogger {
     return "\(message)\(string)"
   }
   
-  private class func printThread(to message: String) -> String {
+  private static func printThread(to message: String) -> String {
     var string = "|\t- Thread   :\n"
     
     string += "|\t\t+ Stack size  : \(Thread.current.stackSize)\n"
@@ -138,7 +140,7 @@ public struct PLogger {
     return "\(message)\(string)"
   }
   
-  private class func printFileDescription(to message: String,
+  private static func printFileDescription(to message: String,
                                           _ file    : String,
                                           _ function: String,
                                           line      : Int,
@@ -155,7 +157,7 @@ public struct PLogger {
     return "\(message)\(string)"
   }
   
-  private class func printMessage(to dest   : String,
+  private static func printMessage(to dest   : String,
                                   message   : @autoclosure () -> Any,
                                   context   : Any? = nil,
                                   type      : LogType) -> String {
@@ -228,7 +230,7 @@ public struct PLogger {
     return "\(dest)\(string)"
   }
   
-  private class func printLog(type: LogType,
+  private static func printLog(type: LogType,
                                   message   : @autoclosure () -> Any,
                                   _ file    : String,
                                   _ function: String,
