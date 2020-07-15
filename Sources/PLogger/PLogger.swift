@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import os.log
 #if canImport(Alamofire)
 import Alamofire
 #endif
@@ -219,7 +220,7 @@ public class PLogger {
       }
       #endif
       if errorPrinted == false {
-        string += "\(message())\n"
+        string += "|\t\(message())\n"
       }
     }
     
@@ -230,37 +231,70 @@ public class PLogger {
     return "\(dest)\(string)"
   }
   
-  private static func printLog(type: LogType,
-                                  message   : @autoclosure () -> Any,
-                                  _ file    : String,
-                                  _ function: String,
-                                  line      : Int,
-                                  column    : Int,
-                                  context   : Any? = nil) {
-    
-    var string = "┌--- logger\n"
-    
-    string = self.printDate(to: string)
-    string = self.printStatus(to: string, type: type)
+	private static func printLog(type: LogType,
+															 message   : @autoclosure () -> Any,
+															 _ file    : String,
+															 _ function: String,
+															 line      : Int,
+															 column    : Int,
+															 context   : Any? = nil) {
+		
+		
+		var string = "┌--- logger\n"
+		
+		string = self.printDate(to: string)
+		string = self.printStatus(to: string, type: type)
+		
+		switch type {
+			case .INFO: break
+			case .DEBUG:
+				string = self.printFileDescription(to: string, file, function, line: line, column: column)
+			case .VERBOSE, .WARNING, .ERROR:
+				string = self.printThread(to: string)
+				string = self.printFileDescription(to: string, file, function, line: line, column: column)
+		}
+		
+		string = self.printMessage(to: string, message: message(), context: context, type: type)
+		string += "└-------\n"
+		
+		#if DEBUG
+		if #available(OSX 10.14, iOS 12.0, *) {
+			var logType: OSLogType = .default
+			var catType = ""
 
-    switch type {
-    case .INFO:
-      break
-    case .DEBUG:
-      string = self.printFileDescription(to: string, file, function, line: line, column: column)
-
-    case .VERBOSE, .WARNING, .ERROR:
-      string = self.printThread(to: string)
-      string = self.printFileDescription(to: string, file, function, line: line, column: column)
-    }
-    
-    string = self.printMessage(to: string, message: message(), context: context, type: type)
-    
-    string += "└-------\n"
-    
-    #if DEBUG
-      print(string)
-    #endif
-  }
+			switch type {
+				case .INFO:
+					logType = .info
+					catType = "Info"
+					break
+				case .DEBUG:
+					logType = .debug
+					catType = "Debug"
+				case .ERROR:
+					logType = .error
+					catType = "Error"
+				case .VERBOSE:
+					catType = "Verbose"
+				case .WARNING:
+					catType = "Warning"
+			}
+			
+			os_log("%@", log: OSLog(subsystem: "Logger", category: "App\(catType)"), type: logType, string)
+		} else {
+			print(string)
+		}
+		#else
+		if #available(OSX 10.14, iOS 12.0, *) {
+			if type == .ERROR {
+				let logType: OSLogType = .error
+				let catType = "Error"
+			}
+			os_log("%@", log: OSLog(subsystem: "Logger", category: "App\(catType)"), type: logType, string)
+			var catType = ""
+		} else if type == .ERROR {
+			print(string)
+		}
+		#endif
+	}
 }
 
