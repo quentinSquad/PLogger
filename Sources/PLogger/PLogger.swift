@@ -3,11 +3,12 @@
 //  Quentin Yann PIDOUX
 //
 //  Created by Quentin PIDOUX on 09/10/2019.
-//  Copyright © 2019 Fitnext. All rights reserved.
+//  Copyright © 2019 Quentin PIDOUX. All rights reserved.
 //
 
 import Foundation
 import os.log
+
 #if canImport(Alamofire)
 import Alamofire
 #endif
@@ -20,78 +21,131 @@ public class PLogger {
     case DEBUG
     case VERBOSE
     case WARNING
+		case NOTICE
     case ERROR
+		case FAULT
   }
-  
+	
 	static public func info(_ message   : @autoclosure () -> Any,
-                  _ file      : String = #file,
-                  _ function  : String = #function,
-                  line        : Int = #line,
-                  column      : Int = #column,
-                  context     : Any? = nil) {
+													_ file      : String 	= #file,
+													_ function  : String 	= #function,
+													line        : Int 		= #line,
+													column      : Int 		= #column,
+													context     : Any? 		= nil,
+													isPrivate	 	: Bool 		= false) {
     
-    self.printLog(type: .INFO, message: message(), file, function, line: line, column: column, context: context)
+		self.printLog(type		: .INFO,
+									message	: message(),
+									file,
+									function,
+									line		: line,
+									column	: column,
+									context	: context,
+									isPrivate: isPrivate)
   }
   
-  static public func debug(_ message   : @autoclosure () -> Any,
-                   _ file      : String = #file,
-                   _ function  : String = #function,
-                   line        : Int = #line,
-                   column      : Int = #column,
-                   context     : Any? = nil) {
-    self.printLog(type    : .DEBUG,
-                      message : message(),
-                      file,
-                      function,
-                      line    : line,
-                      column  : column,
-                      context : context)
+	static public func debug(_ message   : @autoclosure () -> Any,
+													 _ file      : String = #file,
+													 _ function  : String = #function,
+													 line        : Int 		= #line,
+													 column      : Int 		= #column,
+													 context     : Any? 	= nil,
+													 isPrivate	 : Bool 	= false) {
+		self.printLog(type 		: .DEBUG,
+									message : message(),
+									file,
+									function,
+									line    : line,
+									column  : column,
+									context : context,
+									isPrivate: isPrivate)
   }
   
-  static public func verbose(_ message   : @autoclosure () -> Any,
-                     _ file      : String = #file,
-                     _ function  : String = #function,
-                     line        : Int = #line,
-                     column      : Int = #column,
-                     context     : Any? = nil) {
-    self.printLog(type    : .VERBOSE,
-                      message : message(),
-                      file,
-                      function,
-                      line    : line,
-                      column  : column,
-                      context : context)
+	static public func verbose(_ message   : @autoclosure () -> Any,
+														 _ file      : String = #file,
+														 _ function  : String = #function,
+														 line        : Int 		= #line,
+														 column      : Int 		= #column,
+														 context     : Any? 	= nil,
+														 isPrivate	 : Bool 	= false) {
+		self.printLog(type    : .VERBOSE,
+									message : message(),
+									file,
+									function,
+									line    : line,
+									column  : column,
+									context : context,
+									isPrivate: isPrivate)
   }
   
-  static public func warning(_ message   : @autoclosure () -> Any,
-                     _ file      : String = #file,
-                     _ function  : String = #function,
-                     line        : Int = #line,
-                     column      : Int = #column,
-                     context     : Any? = nil) {
-    self.printLog(type    : .WARNING,
-                      message : message(),
-                      file,
-                      function,
-                      line    : line,
-                      column  : column,
-                      context : context)
+	@available(*, deprecated, renamed: "notice")
+	static public func warning(_ message   : @autoclosure () -> Any,
+														 _ file      : String = #file,
+														 _ function  : String = #function,
+														 line        : Int 		= #line,
+														 column      : Int 		= #column,
+														 context     : Any? 	= nil,
+														 isPrivate	 : Bool 	= false) {
+		self.printLog(type    : .WARNING,
+									message : message(),
+									file,
+									function,
+									line    : line,
+									column  : column,
+									context : context,
+									isPrivate: isPrivate)
   }
+	
+	static public func notice(_ message   : @autoclosure () -> Any,
+														_ file      : String = #file,
+														_ function  : String = #function,
+														line        : Int 	 = #line,
+														column      : Int 	 = #column,
+														context     : Any? 	 = nil,
+														isPrivate	 	: Bool 	 = false) {
+		self.printLog(type    : .NOTICE,
+									message : message(),
+									file,
+									function,
+									line    : line,
+									column  : column,
+									context : context,
+									isPrivate: isPrivate)
+	}
   
-   static public func error(_ message   : @autoclosure () -> Any,
-                    _ file      : String = #file,
-                    _ function  : String = #function,
-                    line        : Int = #line,
-                    column      : Int = #column,
-                    context     : Any? = nil) {
-    self.printLog(type    : .ERROR,
-                      message : message(),
-                      file,
-                      function,
-                      line    : line,
-                      column  : column,
-                      context : context)
+	static public func error(_ message   : @autoclosure () -> Any,
+													 _ file      : String = #file,
+													 _ function  : String = #function,
+													 line        : Int 		= #line,
+													 column      : Int 		= #column,
+													 context     : Any? 	= nil,
+													 isPrivate	 : Bool 	= false) {
+		self.printLog(type    : .ERROR,
+									message : message(),
+									file,
+									function,
+									line    : line,
+									column  : column,
+									context : context,
+									isPrivate: isPrivate)
   }
+	
+	static public func fault(_ message   : @autoclosure () -> Any,
+													 _ file      : String = #file,
+													 _ function  : String = #function,
+													 line        : Int 		= #line,
+													 column      : Int 		= #column,
+													 context     : Any? 	= nil,
+													 isPrivate	 : Bool 	= false) {
+		self.printLog(type    : .FAULT,
+									message : message(),
+									file,
+									function,
+									line    : line,
+									column  : column,
+									context : context,
+									isPrivate: isPrivate)
+	}
   
   private static func printDate(to message: String) -> String {
     let string = "|\t- Date     : \(Date())\n"
@@ -109,8 +163,12 @@ public class PLogger {
       string += "💚 Verbose\n"
     case .WARNING:
       string += "🧡 Warning\n"
+		case .NOTICE:
+			string += "🧡 Notice\n"
     case .ERROR:
       string += "❤️ Error\n"
+		case .FAULT:
+			string += "🖤 Fault\n"
     }
     return "\(message)\(string)"
   }
@@ -141,11 +199,11 @@ public class PLogger {
     return "\(message)\(string)"
   }
   
-  private static func printFileDescription(to message: String,
-                                          _ file    : String,
-                                          _ function: String,
-                                          line      : Int,
-                                          column    : Int) -> String {
+	private static func printFileDescription(to message	: String,
+																					 _ file    	: String,
+																					 _ function	: String,
+																					 line      	: Int,
+																					 column    	: Int) -> String {
     var string = "|\t- File     :\n"
     if let file = file.components(separatedBy: "/").last {
       string += "|\t\t+ Name     : \(file)\n"
@@ -158,14 +216,14 @@ public class PLogger {
     return "\(message)\(string)"
   }
   
-  private static func printMessage(to dest   : String,
-                                  message   : @autoclosure () -> Any,
-                                  context   : Any? = nil,
-                                  type      : LogType) -> String {
+	private static func printMessage(to dest	: String,
+																	 message   : @autoclosure () -> Any,
+																	 context   : Any? = nil,
+																	 type      : LogType) -> String {
     var string = "|\t- Log      :\n"
     
     switch type {
-    case .INFO, .DEBUG, .VERBOSE, .WARNING:
+			case .INFO, .DEBUG, .VERBOSE, .WARNING, .NOTICE:
       string += "|\t\t+ Message  : "
 
       if let message = message() as? String {
@@ -173,7 +231,7 @@ public class PLogger {
       } else {
         string += "\(message())\n"
       }
-    case .ERROR:
+			case .ERROR, .FAULT:
       string += "|\t\t+ Error    : \n"
       var errorPrinted = false
       
@@ -237,7 +295,8 @@ public class PLogger {
 															 _ function: String,
 															 line      : Int,
 															 column    : Int,
-															 context   : Any? = nil) {
+															 context   : Any? = nil,
+															 isPrivate : Bool = false) {
 		
 		
 		var string = "┌--- logger\n"
@@ -249,7 +308,7 @@ public class PLogger {
 			case .INFO: break
 			case .DEBUG:
 				string = self.printFileDescription(to: string, file, function, line: line, column: column)
-			case .VERBOSE, .WARNING, .ERROR:
+			case .VERBOSE, .WARNING, .NOTICE, .ERROR, .FAULT:
 				string = self.printThread(to: string)
 				string = self.printFileDescription(to: string, file, function, line: line, column: column)
 		}
@@ -266,7 +325,6 @@ public class PLogger {
 				case .INFO:
 					logType = .info
 					catType = "Info"
-					break
 				case .DEBUG:
 					logType = .debug
 					catType = "Debug"
@@ -277,22 +335,51 @@ public class PLogger {
 					catType = "Verbose"
 				case .WARNING:
 					catType = "Warning"
+				case .NOTICE:
+					catType = "Notice"
+				case .FAULT:
+					logType = .fault
+					catType = "Fault"
 			}
+
+			os_log("%{public}@", log: OSLog(subsystem: "Logger", category: "App\(catType)"), type: logType, string)
 			
-			os_log("%@", log: OSLog(subsystem: "Logger", category: "App\(catType)"), type: logType, string)
 		} else {
 			print(string)
 		}
+				
 		#else
-		if #available(OSX 10.14, iOS 12.0, *) {
-			if type == .ERROR {
-				let logType: OSLogType = .error
-				let catType = "Error"
+		if !isPrivate {
+			if #available(OSX 10.14, iOS 12.0, *) {
+				var logType: OSLogType = .default
+				var catType = ""
+				
+				switch type {
+					case .INFO:
+						logType = .info
+						catType = "Info"
+					case .DEBUG:
+						logType = .debug
+						catType = "Debug"
+					case .ERROR:
+						logType = .error
+						catType = "Error"
+					case .VERBOSE:
+						catType = "Verbose"
+					case .WARNING:
+						catType = "Warning"
+					case .NOTICE:
+						catType = "Notice"
+					case .FAULT:
+						logType = .fault
+						catType = "Fault"
+					}
+				
+				os_log("%{public}@", log: OSLog(subsystem: "Logger", category: "App\(catType)"), type: logType, string)
+				
+			} else {
+				print(string)
 			}
-			os_log("%@", log: OSLog(subsystem: "Logger", category: "App\(catType)"), type: logType, string)
-			var catType = ""
-		} else if type == .ERROR {
-			print(string)
 		}
 		#endif
 	}
