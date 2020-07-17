@@ -21,7 +21,7 @@ This library is matching `os_log` library from Apple and if your device is iOS 1
 For [Swift Package Manager](https://swift.org/package-manager/) add the following package to your Package.swift file.
 
 ``` Swift
-.package(url: "https://github.com/phoenisis/PLogger.git", .upToNextMajor(from: "1.2.0")),
+.package(url: "https://github.com/phoenisis/PLogger.git", .upToNextMajor(from: "1.0.0")),
 ```
 
 
