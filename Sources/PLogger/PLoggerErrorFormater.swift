@@ -8,9 +8,8 @@
 
 import Foundation
 
-
 public protocol PLoggerErrorFormater {
 	func getErrorType() -> Any.Type
 	func getErrorName() -> String
-	func getErrorMessages(_ error: Error) -> [(String, Any)]
+	func getErrorMessages(_ error: Error) -> [String: Any]
 }

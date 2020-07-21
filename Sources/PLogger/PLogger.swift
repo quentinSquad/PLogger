@@ -160,12 +160,13 @@ public class PLogger {
 															 isPrivate : Bool = false) {
 		
 		
-		let logMessage = Formatter().composer(type: type,
-																					message: message(),
-																					file, function,
-																					line: line,
-																					column: column,
-																					context: context,
+		let logMessage = Formatter().composer(type		: type,
+																					message	: message(),
+																					file,
+																					function,
+																					line		: line,
+																					column	: column,
+																					context	: context,
 																					formatters: formaters)
 		
 		#if DEBUG

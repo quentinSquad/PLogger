@@ -19,141 +19,137 @@ private extension String {
 		} else {
 			return "\(res)\(self)\n"
 		}
-		
 	}
 }
 
+struct FormattedResult: Equatable {
+	let title: String?
+	let values: [String: String]
+}
+
 class Formatter {
-	
-	func date(to message: String) -> String {
-		let val = "Date".levelIndentation(0, value: Date())
-		return "\(message)\(val)"
+		
+	func date(currentDate: Date = Date()) -> FormattedResult {
+		FormattedResult(title: nil, values: ["Date": "\(currentDate)"])
 	}
 	
-	func thread(to message: String) -> String {
-		var string = "Thread".levelIndentation(0)
-		
-		string += "Stack size".levelIndentation(1, value: Thread.current.stackSize)
-		string += "Priority".levelIndentation(1, value: Thread.current.threadPriority)
-		
+	func thread() -> FormattedResult {
+		var results: [String: String] = [:]
+		results["Stack size"] = "\(Thread.current.stackSize)"
+		results["Priority"] 	= "\(Thread.current.threadPriority)"
+
 		if let name = OperationQueue.current?.underlyingQueue?.label {
-			string += "Name".levelIndentation(1, value: name)
+			results["Name"] = name
 		}
 		
-		if Thread.current.isCancelled 	{ string += "Cancelled".levelIndentation(1, value: true)}
-		if Thread.current.isExecuting 	{ string += "Executing".levelIndentation(1, value: true) }
-		if Thread.current.isFinished 		{ string += "Finished".levelIndentation(1, value: true) }
-		if Thread.current.isMainThread 	{ string += "Main Thread".levelIndentation(1, value: true) }
+		if Thread.current.isCancelled   { results["Cancelled"] 		= "\(true)" }
+		if Thread.current.isExecuting 	{ results["Executing"] 		= "\(true)" }
+		if Thread.current.isFinished 		{ results["Finished"] 		= "\(true)" }
+		if Thread.current.isMainThread 	{ results["Main Thread"] 	= "\(true)" }
 		
-		return "\(message)\(string)"
+		return FormattedResult(title: "Thread", values: results)
 	}
 	
-	func status(to message: String,
-							type: PLogger.LogType) -> String {
+	func status(logType: PLogger.LogType) -> FormattedResult {
 		var status = ""
 		
-		switch type {
+		switch logType {
 			case .INFO:
-				status += "💙 \(type.rawValue.capitalized)"
+				status += "💙 \(logType.rawValue.capitalized)"
 			case .DEBUG:
-				status += "💜 \(type.rawValue.capitalized)"
+				status += "💜 \(logType.rawValue.capitalized)"
 			case .VERBOSE:
-				status += "💚 \(type.rawValue.capitalized)"
+				status += "💚 \(logType.rawValue.capitalized)"
 			case .WARNING:
-				status += "🧡 \(type.rawValue.capitalized)"
+				status += "🧡 \(logType.rawValue.capitalized)"
 			case .NOTICE:
-				status += "🧡 \(type.rawValue.capitalized)"
+				status += "🧡 \(logType.rawValue.capitalized)"
 			case .ERROR:
-				status += "❤️ \(type.rawValue.capitalized)"
+				status += "❤️ \(logType.rawValue.capitalized)"
 			case .FAULT:
-				status += "🖤 \(type.rawValue.capitalized)"
+				status += "🖤 \(logType.rawValue.capitalized)"
 		}
 		
-		let string = "Status".levelIndentation(0, value: status)
-		return "\(message)\(string)"
+		return FormattedResult(title: nil, values: ["Status": status])
 	}
 	
-	func FileDescription(to message	: String,
-											 _ file    	: String,
+	func fileDescription(_ file    	: String,
 											 _ function	: String,
 											 line      	: Int,
-											 column    	: Int) -> String {
-		var string = "File".levelIndentation(0)
+											 column    	: Int) -> FormattedResult {
+		var results: [String: String] = [:]
+		
+
 		if let file = file.components(separatedBy: "/").last {
-			string += "Name".levelIndentation(1, value: file)
+			results["Name"] = "\(file)"
 		}
 		
-		string += "Function".levelIndentation(1, value: function)
-		string += "Line".levelIndentation(1, value: line)
-		string += "Column".levelIndentation(1, value: column)
-		
-		return "\(message)\(string)"
+		results["Function"] = "\(function)"
+		results["Line"] 		= "\(line)"
+		results["Column"] 	= "\(column)"
+
+		return FormattedResult(title: "File", values: results)
 	}
 	
-	func message(to dest	: String,
-							 message : @autoclosure () -> Any) -> String {
+	func message(message : @autoclosure () -> Any) -> FormattedResult? {
+		guard let message = message() as? String else { return nil }
 		
-		guard let message = message() as? String else { return dest }
-		
-		var string = "Log".levelIndentation(0)
-		string += "Message".levelIndentation(1, value: message)
-		
-		return "\(dest)\(string)"
+		return FormattedResult(title: "Log", values: ["Message": message])
 	}
 	
-	func error(to dest	: String,
-						 message   : @autoclosure () -> Any,
+	func error(message   : @autoclosure () -> Any,
 						 context   : Any? = nil,
 						 logType   : PLogger.LogType,
-						 formatters: [PLoggerErrorFormater]) -> String {
-		if logType == .ERROR || logType == .FAULT {
-			if let error = message() as? Error {
-				var string = "Error".levelIndentation(0)
-				
-				var formatterFounded = false
-				for formatter in formatters {
-					if type(of: error.self) == formatter.getErrorType() {
-						formatterFounded = true
-						string += formatter.getErrorName().levelIndentation(1)
-						for value in formatter.getErrorMessages(error) {
-							string += value.0.levelIndentation(2, value: value.1)
-						}
-					}
-				}
-				if formatterFounded == false {
-					string += "Localized".levelIndentation(1, value: error.localizedDescription)
-					string += "Error".levelIndentation(1, value: error)
-				}
-				return "\(dest)\(string)"
-			}
+						 formatters: [PLoggerErrorFormater]) -> FormattedResult? {
+		if let error = message() as? Error {
+			return printError(error, formatters: formatters)
 		}
-		return dest
+		return nil
 	}
 	
-	func context(to dest	: String,
-							 context   : Any? = nil,
-							 formatters: [PLoggerErrorFormater]) -> String {
-		guard let context = context else { return dest }
+	func context(context   : Any? = nil,
+							 formatters: [PLoggerErrorFormater]) -> FormattedResult? {
+		guard let context = context else { return nil }
+		
 		if let error = context as? Error {
-			var string = "Error".levelIndentation(0)
-			var formatterFounded = false
-			for formatter in formatters {
-				if type(of: error.self) == formatter.getErrorType() {
-					formatterFounded = true
-					string += formatter.getErrorName().levelIndentation(1)
-					for value in formatter.getErrorMessages(error) {
-						string += value.0.levelIndentation(2, value: value.1)
-					}
-				}
-			}
-			if formatterFounded == false {
-				string += "Localized".levelIndentation(1, value: error.localizedDescription)
-				string += "Error".levelIndentation(1, value: error)
-			}
-			return "\(dest)\(string)"
+			return printError(error, formatters: formatters)
 		}
 		
-		return "\(dest)Context".levelIndentation(1, value: context)
+		return FormattedResult(title: nil, values: ["Context": "\(context)"])
+	}
+	
+	func printError(_ error: Error,
+									formatters: [PLoggerErrorFormater]) -> FormattedResult {
+		var results: [String: String] = [:]
+		
+		for formatter in formatters {
+			if type(of: error.self) == formatter.getErrorType() {
+				for value in formatter.getErrorMessages(error) {
+					results[value.key] = "\(value.value)"
+				}
+				return FormattedResult(title: formatter.getErrorName(), values: results)
+			}
+		}
+		results["Localized"] 	= "\(error.localizedDescription)"
+		results["Error"] 			= "\(error)"
+
+		return FormattedResult(title: "Error", values: results)
+	}
+	
+	func stringFormatter(_ input: FormattedResult) -> String {
+		if let title = input.title {
+			var string = title.levelIndentation(0)
+			for value in input.values {
+				string += value.key.levelIndentation(1, value: value.value)
+			}
+			return string
+		} else {
+			var string = ""
+			for value in input.values {
+				string += value.key.levelIndentation(0, value: value.value)
+			}
+			return string
+		}
 	}
 	
 	func composer(type: PLogger.LogType,
@@ -167,21 +163,30 @@ class Formatter {
 		
 		var string = "┌--- logger\n"
 		
-		string = self.date(to: string)
-		string = self.status(to: string, type: type)
+		string += stringFormatter(self.date())
+		string += stringFormatter(self.status(logType: type))
 		
 		switch type {
 			case .INFO: break
 			case .DEBUG:
-				string = self.FileDescription(to: string, file, function, line: line, column: column)
+				string += stringFormatter(self.fileDescription(file, function, line: line, column: column))
 			case .VERBOSE, .WARNING, .NOTICE, .ERROR, .FAULT:
-				string = self.thread(to: string)
-				string = self.FileDescription(to: string, file, function, line: line, column: column)
+				string += stringFormatter(self.thread())
+				string += stringFormatter(self.fileDescription(file, function, line: line, column: column))
 		}
 		
-		string = self.message(to: string, message: message())
-		string = self.error(to: string, message: message(), context: context, logType: type, formatters: formatters)
-		string = self.context(to: string, context: context, formatters: formatters)
+		if let value = self.message(message: message()) {
+			string += stringFormatter(value)
+		}
+		
+		if let value = self.error(message: message(), context: context, logType: type, formatters: formatters) {
+			string += stringFormatter(value)
+		}
+		
+		if let value = self.context(context: context, formatters: formatters) {
+			string += stringFormatter(value)
+		}
+
 		string += "└-------\n"
 		
 		return string

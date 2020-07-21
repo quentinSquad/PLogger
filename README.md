@@ -1,3 +1,4 @@
+![Swift](https://github.com/phoenisis/PLogger/workflows/Swift/badge.svg)
 # PLogger
 
 ### During Development: Colored Logging your Xcode Console
