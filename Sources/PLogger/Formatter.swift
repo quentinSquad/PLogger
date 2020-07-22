@@ -25,14 +25,28 @@ private extension String {
 struct FormattedResult: Equatable {
 	let title: String?
 	let values: [String: String]
+	
+	static func == (lhs: FormattedResult, rhs: FormattedResult) -> Bool {
+		if lhs.values.count != rhs.values.count {
+			return false
+		}
+		
+		for left in lhs.values {
+			if left.value != rhs.values[left.key] {
+				return false
+			}
+		}
+		
+		return lhs.title == rhs.title
+	}
 }
 
 class Formatter {
-		
+
 	func date(currentDate: Date = Date()) -> FormattedResult {
 		FormattedResult(title: nil, values: ["Date": "\(currentDate)"])
 	}
-	
+
 	func thread() -> FormattedResult {
 		var results: [String: String] = [:]
 		results["Stack size"] = "\(Thread.current.stackSize)"
@@ -41,18 +55,18 @@ class Formatter {
 		if let name = OperationQueue.current?.underlyingQueue?.label {
 			results["Name"] = name
 		}
-		
-		if Thread.current.isCancelled   { results["Cancelled"] 		= "\(true)" }
-		if Thread.current.isExecuting 	{ results["Executing"] 		= "\(true)" }
-		if Thread.current.isFinished 		{ results["Finished"] 		= "\(true)" }
-		if Thread.current.isMainThread 	{ results["Main Thread"] 	= "\(true)" }
-		
+
+		if Thread.current.isCancelled { results["Cancelled"] 		= "\(true)" }
+		if Thread.current.isExecuting { results["Executing"] 		= "\(true)" }
+		if Thread.current.isFinished { results["Finished"] 		= "\(true)" }
+		if Thread.current.isMainThread { results["Main Thread"] 	= "\(true)" }
+
 		return FormattedResult(title: "Thread", values: results)
 	}
-	
+
 	func status(logType: PLogger.LogType) -> FormattedResult {
 		var status = ""
-		
+
 		switch logType {
 			case .INFO:
 				status += "💙 \(logType.rawValue.capitalized)"
@@ -69,34 +83,33 @@ class Formatter {
 			case .FAULT:
 				status += "🖤 \(logType.rawValue.capitalized)"
 		}
-		
+
 		return FormattedResult(title: nil, values: ["Status": status])
 	}
-	
+
 	func fileDescription(_ file    	: String,
 											 _ function	: String,
 											 line      	: Int,
 											 column    	: Int) -> FormattedResult {
 		var results: [String: String] = [:]
-		
 
 		if let file = file.components(separatedBy: "/").last {
 			results["Name"] = "\(file)"
 		}
-		
+
 		results["Function"] = "\(function)"
 		results["Line"] 		= "\(line)"
 		results["Column"] 	= "\(column)"
 
 		return FormattedResult(title: "File", values: results)
 	}
-	
+
 	func message(message : @autoclosure () -> Any) -> FormattedResult? {
 		guard let message = message() as? String else { return nil }
-		
+
 		return FormattedResult(title: "Log", values: ["Message": message])
 	}
-	
+
 	func error(message   : @autoclosure () -> Any,
 						 context   : Any? = nil,
 						 logType   : PLogger.LogType,
@@ -106,22 +119,22 @@ class Formatter {
 		}
 		return nil
 	}
-	
+
 	func context(context   : Any? = nil,
 							 formatters: [PLoggerErrorFormater]) -> FormattedResult? {
 		guard let context = context else { return nil }
-		
+
 		if let error = context as? Error {
 			return printError(error, formatters: formatters)
 		}
-		
+
 		return FormattedResult(title: nil, values: ["Context": "\(context)"])
 	}
-	
+
 	func printError(_ error: Error,
 									formatters: [PLoggerErrorFormater]) -> FormattedResult {
 		var results: [String: String] = [:]
-		
+
 		for formatter in formatters {
 			if type(of: error.self) == formatter.getErrorType() {
 				for value in formatter.getErrorMessages(error) {
@@ -135,7 +148,7 @@ class Formatter {
 
 		return FormattedResult(title: "Error", values: results)
 	}
-	
+
 	func stringFormatter(_ input: FormattedResult) -> String {
 		if let title = input.title {
 			var string = title.levelIndentation(0)
@@ -151,7 +164,7 @@ class Formatter {
 			return string
 		}
 	}
-	
+
 	func composer(type: PLogger.LogType,
 								message   : @autoclosure () -> Any,
 								_ file    : String,
@@ -160,12 +173,12 @@ class Formatter {
 								column    : Int,
 								context   : Any? = nil,
 								formatters: [PLoggerErrorFormater]) -> String {
-		
-		var string = "┌--- logger\n"
-		
+
+		var string = "\n┌--- logger\n"
+
 		string += stringFormatter(self.date())
 		string += stringFormatter(self.status(logType: type))
-		
+
 		switch type {
 			case .INFO: break
 			case .DEBUG:
@@ -174,21 +187,21 @@ class Formatter {
 				string += stringFormatter(self.thread())
 				string += stringFormatter(self.fileDescription(file, function, line: line, column: column))
 		}
-		
+
 		if let value = self.message(message: message()) {
 			string += stringFormatter(value)
 		}
-		
+
 		if let value = self.error(message: message(), context: context, logType: type, formatters: formatters) {
 			string += stringFormatter(value)
 		}
-		
+
 		if let value = self.context(context: context, formatters: formatters) {
 			string += stringFormatter(value)
 		}
 
 		string += "└-------\n"
-		
+
 		return string
 	}
 }
