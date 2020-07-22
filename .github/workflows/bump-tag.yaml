@@ -16,5 +16,5 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.TAG_TOKEN }}
         DEFAULT_BUMP: patch
-        DRY_RUN: true
+        DRY_RUN: false
         WITH_V: false
