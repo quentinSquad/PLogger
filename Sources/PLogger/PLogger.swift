@@ -9,23 +9,94 @@
 import Foundation
 import os.log
 
-#if canImport(Alamofire)
-import Alamofire
-#endif
-
 //let log = PLogger.self
 
+private class DefaultDebugLogOutput: PLoggerOutputProtocol {
+	func actionFor(log: String, type: PLogger.LogType, isPrivate: Bool) {
+		if #available(OSX 10.14, iOS 12.0, *) {
+			var logType: OSLogType = .default
+			
+			switch type {
+				case .INFO:
+					logType = .info
+				case .DEBUG:
+					logType = .debug
+				case .ERROR:
+					logType = .error
+				case .FAULT:
+					logType = .fault
+				case .VERBOSE, .WARNING, .NOTICE:
+					break
+			}
+			
+			os_log("%{public}@", log: OSLog(subsystem: "Logger",
+																			category: "App\(type.rawValue.uppercased())"), type: logType, log)
+			
+		} else {
+			print(log)
+		}
+	}
+}
+
+private class DefaultReleaseLogOutput: PLoggerOutputProtocol {
+	func actionFor(log: String, type: PLogger.LogType, isPrivate: Bool) {
+		if !isPrivate {
+			if #available(OSX 10.14, iOS 12.0, *) {
+				var logType: OSLogType = .default
+				
+				switch type {
+					case .INFO:
+						logType = .info
+					case .DEBUG:
+						logType = .debug
+					case .ERROR:
+						logType = .error
+					case .FAULT:
+						logType = .fault
+					case .VERBOSE, .WARNING, .NOTICE:
+						break
+				}
+				
+				os_log("%{public}@", log: OSLog(subsystem: "Logger",
+																				category: "App\(type.rawValue.uppercased())"), type: logType, log)
+				
+			} else {
+				print(log)
+			}
+		}
+	}
+}
+
 public class PLogger {
-  private enum LogType {
-    case INFO
-    case DEBUG
-    case VERBOSE
-    case WARNING
+	public enum LogType: String {
+		case INFO
+		case DEBUG
+		case VERBOSE
+		@available(*, deprecated, renamed: "notice")
+		case WARNING
 		case NOTICE
-    case ERROR
+		case ERROR
 		case FAULT
-  }
-	
+	}
+
+	private static var formaters: [PLoggerErrorFormater] = []
+	private static var debugLogOutput: PLoggerOutputProtocol = DefaultDebugLogOutput()
+	private static var releaseLogOutput: PLoggerOutputProtocol = DefaultReleaseLogOutput()
+
+	static public func addFormater(_ formater: PLoggerErrorFormater) {
+		self.formaters.append(formater)
+	}
+
+	static public func changeLogOutput(debug: PLoggerOutputProtocol? 		= nil,
+																		 release: PLoggerOutputProtocol?	= nil) {
+		if let output = debug {
+			debugLogOutput = output
+		}
+		if let output = release {
+			releaseLogOutput = output
+		}
+	}
+
 	static public func info(_ message   : @autoclosure () -> Any,
 													_ file      : String 	= #file,
 													_ function  : String 	= #function,
@@ -33,7 +104,7 @@ public class PLogger {
 													column      : Int 		= #column,
 													context     : Any? 		= nil,
 													isPrivate	 	: Bool 		= false) {
-    
+
 		self.printLog(type		: .INFO,
 									message	: message(),
 									file,
@@ -42,8 +113,8 @@ public class PLogger {
 									column	: column,
 									context	: context,
 									isPrivate: isPrivate)
-  }
-  
+	}
+
 	static public func debug(_ message   : @autoclosure () -> Any,
 													 _ file      : String = #file,
 													 _ function  : String = #function,
@@ -59,8 +130,8 @@ public class PLogger {
 									column  : column,
 									context : context,
 									isPrivate: isPrivate)
-  }
-  
+	}
+
 	static public func verbose(_ message   : @autoclosure () -> Any,
 														 _ file      : String = #file,
 														 _ function  : String = #function,
@@ -76,8 +147,8 @@ public class PLogger {
 									column  : column,
 									context : context,
 									isPrivate: isPrivate)
-  }
-  
+	}
+
 	@available(*, deprecated, renamed: "notice")
 	static public func warning(_ message   : @autoclosure () -> Any,
 														 _ file      : String = #file,
@@ -94,8 +165,8 @@ public class PLogger {
 									column  : column,
 									context : context,
 									isPrivate: isPrivate)
-  }
-	
+	}
+
 	static public func notice(_ message   : @autoclosure () -> Any,
 														_ file      : String = #file,
 														_ function  : String = #function,
@@ -112,7 +183,7 @@ public class PLogger {
 									context : context,
 									isPrivate: isPrivate)
 	}
-  
+
 	static public func error(_ message   : @autoclosure () -> Any,
 													 _ file      : String = #file,
 													 _ function  : String = #function,
@@ -128,8 +199,8 @@ public class PLogger {
 									column  : column,
 									context : context,
 									isPrivate: isPrivate)
-  }
-	
+	}
+
 	static public func fault(_ message   : @autoclosure () -> Any,
 													 _ file      : String = #file,
 													 _ function  : String = #function,
@@ -146,149 +217,7 @@ public class PLogger {
 									context : context,
 									isPrivate: isPrivate)
 	}
-  
-  private static func printDate(to message: String) -> String {
-    let string = "|\t- Date     : \(Date())\n"
-    return "\(message)\(string)"
-  }
-  
-  private static func printStatus(to message: String, type: LogType) -> String {
-    var string = "|\t- Status   : "
-    switch type {
-    case .INFO:
-      string += "💙 Info\n"
-    case .DEBUG:
-      string += "💜 Debug\n"
-    case .VERBOSE:
-      string += "💚 Verbose\n"
-    case .WARNING:
-      string += "🧡 Warning\n"
-		case .NOTICE:
-			string += "🧡 Notice\n"
-    case .ERROR:
-      string += "❤️ Error\n"
-		case .FAULT:
-			string += "🖤 Fault\n"
-    }
-    return "\(message)\(string)"
-  }
-  
-  private static func printThread(to message: String) -> String {
-    var string = "|\t- Thread   :\n"
-    
-    string += "|\t\t+ Stack size  : \(Thread.current.stackSize)\n"
-    string += "|\t\t+ Priority    : \(Thread.current.threadPriority)\n"
-    
-    if let name = OperationQueue.current?.underlyingQueue?.label {
-      string += "|\t\t+ Name        : \(name)\n"
-    }
-    
-    if Thread.current.isCancelled {
-      string += "|\t\t+ Cancelled   : true\n"
-    }
-    if Thread.current.isExecuting {
-      string += "|\t\t+ Executing   : true\n"
-    }
-    if Thread.current.isFinished {
-      string += "|\t\t+ Finished    : true\n"
-    }
-    if Thread.current.isMainThread {
-      string += "|\t\t+ Main Thread : true\n"
-    }
-    
-    return "\(message)\(string)"
-  }
-  
-	private static func printFileDescription(to message	: String,
-																					 _ file    	: String,
-																					 _ function	: String,
-																					 line      	: Int,
-																					 column    	: Int) -> String {
-    var string = "|\t- File     :\n"
-    if let file = file.components(separatedBy: "/").last {
-      string += "|\t\t+ Name     : \(file)\n"
-    }
 
-    string += "|\t\t+ Function : \(function)\n"
-    string += "|\t\t+ Line     : \(line)\n"
-    string += "|\t\t+ Column   : \(column)\n"
-    
-    return "\(message)\(string)"
-  }
-  
-	private static func printMessage(to dest	: String,
-																	 message   : @autoclosure () -> Any,
-																	 context   : Any? = nil,
-																	 type      : LogType) -> String {
-    var string = "|\t- Log      :\n"
-    
-    switch type {
-			case .INFO, .DEBUG, .VERBOSE, .WARNING, .NOTICE:
-      string += "|\t\t+ Message  : "
-
-      if let message = message() as? String {
-        string += "\(message)\n"
-      } else {
-        string += "\(message())\n"
-      }
-			case .ERROR, .FAULT:
-      string += "|\t\t+ Error    : \n"
-      var errorPrinted = false
-      
-      if let error = message() as? Error {
-        string += "|\t\t\t+ Localized : \(error.localizedDescription)\n"
-        string += "|\t\t\t+ error     : \(error)\n"
-        errorPrinted = true
-      }
-      #if canImport(Alamofire)
-      if let error = message() as? AFError {
-        string += "|\t\t\t+ Alamofire :\n"
-        
-        if let value = error.recoverySuggestion {
-          string += "|\t\t\t\t- Recovery suggestion       : \(value)\n"
-        }
-        if error.isInvalidURLError {
-          string += "|\t\t\t\t- Is Invalid URL            : true\n"
-        }
-        if error.isMultipartEncodingError {
-          string += "|\t\t\t\t- Is multipart encoding     : true\n"
-        }
-        if error.isParameterEncodingError {
-          string += "|\t\t\t\t- Is parameter encoding     : true\n"
-        }
-        if error.isResponseValidationError {
-          string += "|\t\t\t\t- Is response validation    : true\n"
-        }
-        if error.isResponseSerializationError {
-          string += "|\t\t\t\t- Is response serialization : true\n"
-        }
-        
-        if let value = error.responseCode {
-          string += "|\t\t\t\t- Response code             : \(value)\n"
-        }
-        if let value = error.failureReason {
-          string += "|\t\t\t\t- Failure reason            : \(value)\n"
-        }
-        if let value = error.url {
-          string += "|\t\t\t\t- Url                       : \(value)\n"
-        }
-        
-        string += "|\t\t\t+ error     : \(error)\n"
-        errorPrinted = true
-      }
-      #endif
-      if errorPrinted == false {
-        string += "|\t\(message())\n"
-      }
-    }
-    
-    if let context = context {
-      string += "|\t\t+ Context  : \(context)\n"
-    }
-    
-    return "\(dest)\(string)"
-  }
-  
 	private static func printLog(type: LogType,
 															 message   : @autoclosure () -> Any,
 															 _ file    : String,
@@ -297,91 +226,20 @@ public class PLogger {
 															 column    : Int,
 															 context   : Any? = nil,
 															 isPrivate : Bool = false) {
-		
-		
-		var string = "┌--- logger\n"
-		
-		string = self.printDate(to: string)
-		string = self.printStatus(to: string, type: type)
-		
-		switch type {
-			case .INFO: break
-			case .DEBUG:
-				string = self.printFileDescription(to: string, file, function, line: line, column: column)
-			case .VERBOSE, .WARNING, .NOTICE, .ERROR, .FAULT:
-				string = self.printThread(to: string)
-				string = self.printFileDescription(to: string, file, function, line: line, column: column)
-		}
-		
-		string = self.printMessage(to: string, message: message(), context: context, type: type)
-		string += "└-------\n"
-		
+
+		let logMessage = Formatter().composer(type		: type,
+																					message	: message(),
+																					file,
+																					function,
+																					line		: line,
+																					column	: column,
+																					context	: context,
+																					formatters: formaters)
+
 		#if DEBUG
-		if #available(OSX 10.14, iOS 12.0, *) {
-			var logType: OSLogType = .default
-			var catType = ""
-
-			switch type {
-				case .INFO:
-					logType = .info
-					catType = "Info"
-				case .DEBUG:
-					logType = .debug
-					catType = "Debug"
-				case .ERROR:
-					logType = .error
-					catType = "Error"
-				case .VERBOSE:
-					catType = "Verbose"
-				case .WARNING:
-					catType = "Warning"
-				case .NOTICE:
-					catType = "Notice"
-				case .FAULT:
-					logType = .fault
-					catType = "Fault"
-			}
-
-			os_log("%{public}@", log: OSLog(subsystem: "Logger", category: "App\(catType)"), type: logType, string)
-			
-		} else {
-			print(string)
-		}
-				
+		self.debugLogOutput.actionFor(log: logMessage, type: type, isPrivate: isPrivate)
 		#else
-		if !isPrivate {
-			if #available(OSX 10.14, iOS 12.0, *) {
-				var logType: OSLogType = .default
-				var catType = ""
-				
-				switch type {
-					case .INFO:
-						logType = .info
-						catType = "Info"
-					case .DEBUG:
-						logType = .debug
-						catType = "Debug"
-					case .ERROR:
-						logType = .error
-						catType = "Error"
-					case .VERBOSE:
-						catType = "Verbose"
-					case .WARNING:
-						catType = "Warning"
-					case .NOTICE:
-						catType = "Notice"
-					case .FAULT:
-						logType = .fault
-						catType = "Fault"
-					}
-				
-				os_log("%{public}@", log: OSLog(subsystem: "Logger", category: "App\(catType)"), type: logType, string)
-				
-			} else {
-				print(string)
-			}
-		}
+		self.releaseLogOutput.actionFor(log: logMessage, type: type, isPrivate: isPrivate)
 		#endif
 	}
 }
-

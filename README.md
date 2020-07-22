@@ -1,3 +1,4 @@
+![Swift](https://github.com/phoenisis/PLogger/workflows/Swift/badge.svg)
 # PLogger
 
 ### During Development: Colored Logging your Xcode Console
@@ -43,13 +44,50 @@ log.verbose(_ message: Any, context: Any?, isPrivate: Bool = false)
 log.notice(_ message: Any, context: Any?, isPrivate: Bool = false)
 log.error(_ message: Any, context: Any?, isPrivate: Bool = false)
 log.fault(_ message: Any, context: Any?, isPrivate: Bool = false)
+
+log.addFormater(_ formater: PLoggerErrorFormater)
+log.changeLogOutput(debug: PLoggerOutputProtocol? = nil, release: PLoggerOutputProtocol?	= nil)
 ```
 
 ## Information
 By default `isPrivate` is set to `false` witch will print log in production environement.
 In DEBUG environement all logs are printed.
 
+## Extension
+### Formatter
+You can add any error formater for your custom error, to do this you need to implement the `PLoggerErrorFormater`  protocol: 
+``` Swift 
+protocol PLoggerErrorFormater {
+	func getErrorType() -> Any.Type
+	func getErrorName() -> String
+	func getErrorMessages(_ error: Error) -> [String: Any]
+}
+```
+After implementing your own formatter you need to subscribe it in PLogger with the methode `addFormater(_ formater: PLoggerErrorFormater)`
+``` Swift
+let formatter: PLoggerErrorFormater = YourCustomPLoggerErrorFormater()
+log.addFormater(formatter)
+```
+
+### Log output
+You may want to change where logs are outputed like in a remote server or else, to do so PLogger provide a protocol that you may want to implemented: 
+``` Swift
+protocol PLoggerOutputProtocol {
+	func actionFor(log: String, type: PLogger.LogType, isPrivate: Bool)
+}
+```
+
+After implementing your own output action, you need to subscribe it in Plogger with the methode `changeLogOutput(debug: PLoggerOutputProtocol? = nil, release: PLoggerOutputProtocol? = nil)`
+``` Swift
+let outputActionForRelease: PLoggerOutputProtocol = YourCustomPLoggerErrorFormater()
+log.changeLogOutput(release: outputActionForRelease)
+```
+
+---
 ## Exemples
+
+### Extension 
+An `AFError` extension is available as Exemple in `Sources/Plogger/Formatter Exemple`.
 
 ### Info
 #### input
@@ -306,7 +344,7 @@ log.error("A test with error", context: error)
 |		+ Column   : 12
 |	- Log      :
 |		+ Error    : 
-A test
+|	A test
 └-------
 
 ┌--- logger
@@ -354,9 +392,10 @@ A test with error
 #### input
 ``` Swift
 enum MyError: Error {
-case first(message: String)
-
-var localizedDescription: String { return "Some description here!" }
+	case first(message: String)
+	var localizedDescription: String {
+		return "Some description here!"
+	}
 }
 
 let error = MyError.first(message: "this is an error")
@@ -384,7 +423,7 @@ log.fault("A test with error", context: error)
 |		+ Column   : 12
 |	- Log      :
 |		+ Error    : 
-A test
+|	A test
 └-------
 
 ┌--- logger
@@ -423,7 +462,7 @@ A test
 |		+ Column   : 12
 |	- Log      :
 |		+ Error    : 
-A test with error
+|	A test with error
 |		+ Context  : first(message: "this is an error")
 └-------
 ```
