@@ -32,7 +32,7 @@ Add that near the top of your `AppDelegate.swift` to be able to use PLogger in y
 
 ``` Swift
 import PLogger
-let log = Plogger.self
+let log = PLogger.self
 ```
 
 ## Function signatures
